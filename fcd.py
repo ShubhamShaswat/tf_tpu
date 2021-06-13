@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 !pip install tensorflow_gan #install tensorflow_gans
-import tensorflow_gan 
+import tensorflow_gan as tfgan
 
 
 #already ready code from source https://github.com/tsc2017/Frechet-Inception-Distance/blob/master/fid.py
