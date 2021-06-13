@@ -40,6 +40,10 @@ def get_inception_activations(inps):
 #download dataset
 (x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
 
+#convert the data into float32 type
+x_train = tf.cast(x_train,dtype=tf.float32)
+x_test = tf.cast(x_test,dtype=tf.float32)
+
 activations1 = get_inception_activations(tf.transpose(x_train[:1024],[0,3,1,2]))
 activations2 = get_inception_activations(tf.transpose(x_test[:1024],[0,3,1,2]))
 
