@@ -1,8 +1,10 @@
+
 import numpy as np
 import tensorflow as tf
 !pip install tensorflow_gan #install tensorflow_gans
 import tensorflow_gan as tfgan
-
+#import fid eval form tensorflow gan
+from tensorflow.python.ops import array_ops
 
 #already ready code from source https://github.com/tsc2017/Frechet-Inception-Distance/blob/master/fid.py
 
@@ -10,22 +12,28 @@ INCEPTION_TFHUB = 'https://tfhub.dev/tensorflow/tfgan/eval/inception/1' #source 
 INCEPTION_FINAL_POOL = 'pool_3' #final pool_layer of inception of model
 BATCH_SIZE = 64 #bacth size
 
-#import fid eval form tensorflow gan
-from tensorflow.python.ops import array_ops
+#for tpu
+resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='')
+tf.config.experimental_connect_to_cluster(resolver)
+# This is the TPU initialization code that has to be at the beginning.
+tf.tpu.experimental.initialize_tpu_system(resolver)
+print("All devices: ", tf.config.list_logical_devices('TPU'))
+strategy = tf.distribute.TPUStrategy(resolver)
 
+@
 def inception_activations(images,num_splits = 1):
     images = tf.transpose(images, [0, 2, 3, 1])
     size = 299
     images = tf.compat.v1.image.resize_bilinear(images, [size, size])
-    generated_images_list = tf.split(images, num_or_size_splits = num_splits)
+    generated_images_list = array_ops.split(images, num_or_size_splits = num_splits)
     activations = tf.map_fn(
         fn = tfgan.eval.classifier_fn_from_tfhub(INCEPTION_TFHUB, INCEPTION_FINAL_POOL, True),
-        elems = tf.stack(generated_images_list),
+        elems = array_ops.stack(generated_images_list),
         parallel_iterations = 1,
         back_prop = False,
         swap_memory = True,
         name = 'RunClassifier')
-    activations = tf.concat(tf.unstack(activations), 0)
+    activations = array_ops.concat(array_ops.unstack(activations), 0)
     return activations
 
 def get_inception_activations(inps):
