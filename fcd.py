@@ -4,4 +4,45 @@ import tensorflow as tf
 import tensorflow_gan 
 
 
-print("testing...")	
+#already ready code from source https://github.com/tsc2017/Frechet-Inception-Distance/blob/master/fid.py
+
+INCEPTION_TFHUB = 'https://tfhub.dev/tensorflow/tfgan/eval/inception/1' #source of our inception model
+INCEPTION_FINAL_POOL = 'pool_3' #final pool_layer of inception of model
+BATCH_SIZE = 64 #bacth size
+
+#import fid eval form tensorflow gan
+from tensorflow.python.ops import array_ops
+
+def inception_activations(images,num_splits = 1):
+    images = tf.transpose(images, [0, 2, 3, 1])
+    size = 299
+    images = tf.compat.v1.image.resize_bilinear(images, [size, size])
+    generated_images_list = array_ops.split(images, num_or_size_splits = num_splits)
+    activations = tf.map_fn(
+        fn = tfgan.eval.classifier_fn_from_tfhub(INCEPTION_TFHUB, INCEPTION_FINAL_POOL, True),
+        elems = array_ops.stack(generated_images_list),
+        parallel_iterations = 1,
+        back_prop = False,
+        swap_memory = True,
+        name = 'RunClassifier')
+    activations = array_ops.concat(array_ops.unstack(activations), 0)
+    return activations
+
+def get_inception_activations(inps):
+    n_batches = int(np.ceil(float(inps.shape[0]) / BATCH_SIZE))
+    act = np.zeros([inps.shape[0], 2048], dtype = np.float32)
+    for i in range(n_batches):
+        inp = inps[i * BATCH_SIZE : (i + 1) * BATCH_SIZE] / 255. * 2 - 1
+        act[i * BATCH_SIZE : i * BATCH_SIZE + min(BATCH_SIZE, inp.shape[0])] = inception_activations(inp)
+    return act
+
+
+#download dataset
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+
+activations1 = get_inception_activations(tf.transpose(x_train[:1024],[0,3,1,2]))
+activations2 = get_inception_activations(tf.transpose(x_test[:1024],[0,3,1,2]))
+
+#caluclate the fina fid score 
+fcd = tfgan.eval.frechet_classifier_distance_from_activations(activations1, activations2)
+print(fcd)
