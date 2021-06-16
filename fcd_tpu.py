@@ -36,6 +36,26 @@ def inception_activations(images,num_splits = 1):
     activations = tf.concat(tf.unstack(activations), 0)
     return activations
 
+
+ #prepare dataset
+def get_inception_dataset():
+
+	#download dataset
+	dataset = tf.keras.datasets.cifar10.load_data()
+
+	def scale(x1,y1,x2,y2):
+		x1 = tf.cast(x1,dtype=tf.float32)
+		x2= tf.cast(x2,dtype=tf.float32)
+
+		x1 = x1 / 255. * 2 - 1
+		x2 = x2 / 255. * 2 - 1		
+		return x1,x2
+
+	dataset = dataset.map(scale)
+	dataset = dataset.batch(BATCH_SIZE)
+
+	return dataset
+
 def get_inception_activations(inps):
     n_batches = int(np.ceil(float(inps.shape[0]) / BATCH_SIZE))
     act = np.zeros([inps.shape[0], 2048], dtype = np.float32)
@@ -46,7 +66,7 @@ def get_inception_activations(inps):
 
 
 #download dataset
-(x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+#(x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
 
 #convert the data into float32 type
 x_train = tf.cast(x_train,dtype=tf.float32)
