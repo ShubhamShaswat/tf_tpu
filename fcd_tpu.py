@@ -41,11 +41,18 @@ def inception_activations(images,num_splits = 1):
 def get_inception_dataset():
 
 	#download dataset
-	dataset = tf.keras.datasets.cifar10.load_data()
+	(x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+	dataset = tf.data.Dataset.from_tensor_slices((x_train,x_test))
+	x_train = tf.transpose(x_train,[0,3,1,2])
+	x_test = tf.transpose(x_test,[0,3,1,2])
+	
 
-	def scale(x1,y1,x2,y2):
+	def scale(x1,x2):
 		x1 = tf.cast(x1,dtype=tf.float32)
-		x2= tf.cast(x2,dtype=tf.float32)
+		x2 = tf.cast(x2,dtype=tf.float32)
+		#x1 = tf.transpose(x1,[0,3,1,2])
+		#x2 = tf.transpose(x1,[0,3,1,2])
+
 
 		x1 = x1 / 255. * 2 - 1
 		x2 = x2 / 255. * 2 - 1		
